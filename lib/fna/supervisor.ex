@@ -12,6 +12,9 @@ defmodule Fna.Supervisor do
   @impl true
   def init([]) do
     children = [
+      Fna.MatchBeamSup,
+      Fna.FastBallSup,
+      Fna.DbServer,
       Fna.CollectProducer
     ]
     Supervisor.init(children, strategy: :one_for_one)

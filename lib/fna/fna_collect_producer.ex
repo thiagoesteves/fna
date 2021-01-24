@@ -9,7 +9,7 @@ defmodule Fna.CollectProducer do
   ###==========================================================================
   ### Local Defines
   ###==========================================================================
-  @fNA_COLLECT_INTERVAL 1000
+  @fNA_COLLECT_INTERVAL 10000
 
   ###==========================================================================
   ### Types
@@ -20,24 +20,29 @@ defmodule Fna.CollectProducer do
   ###==========================================================================
   
   def start_link([]) do
-    GenServer.start_link(__MODULE__, [], name: :fna_collect_producer)
+    GenServer.start_link(__MODULE__, [], [name: __MODULE__])
   end
   
   @impl true
   def init([]) do
     # Start the collectors dispatching
     Process.send(self(), :dispatch_collector, [])
+    # TODO: Here we should register in the database server to be notified if the
+    #       database didn't receive the expect information. If this occurs, we should 
+    #       retry the collection.
     Logger.info "fna_collect_producer created with success"
     {:ok, []}
   end
 
   @impl true
   def handle_info(:dispatch_collector, state) do
+    # Create a reference for the operation
+    reference = :erlang.make_ref
     # Create collectors
-    create_matchbeam_collector()
-    create_fastball_collector()
+    create_matchbeam_collector(reference)
+    create_fastball_collector(reference)
     # Notify database
-    notify_database()
+    notify_database(reference)
     # Keep the looping of creating data collectors
     Process.send_after(self(), :dispatch_collector, @fNA_COLLECT_INTERVAL)
     {:noreply, state}
@@ -47,17 +52,18 @@ defmodule Fna.CollectProducer do
   ### Private functions
   ###==========================================================================
 
-  defp create_matchbeam_collector() do
-    #TODO: implement the creation here
+  defp create_matchbeam_collector(ref) do
+    {:ok, _pid } =  Fna.MatchBeamSup.collect_data [ref]
   end
 
-  defp create_fastball_collector() do
-    #TODO: implement the creation here
+  defp create_fastball_collector(ref) do
+    {:ok, _pid } =  Fna.FastBallSup.collect_data [ref]
   end
 
-  defp notify_database() do
-    #TODO: Notify database that it should receive data from the collectors
-    #      this will allow to check if no data was receive and a new collection
-    #      must be executed
+  defp notify_database(ref) do
+    #TODO: Notify database that it should receive data from the collectors.
+    #      This will allow to check if no data was receive and a new collection
+    #      must be executed. The reference can be used as unique ID for the
+    #      operation
   end
 end
