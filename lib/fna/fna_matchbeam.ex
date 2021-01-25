@@ -9,6 +9,12 @@ defmodule Fna.MatchBeam do
   ### Local Defines
   ###==========================================================================
 
+  # Server address definitions
+  @matchbeam_address 'http://forzaassignment.forzafootball.com:8080/feed/matchbeam'
+
+  # Timeouts
+  @tIME_TO_RETRY     1000
+
   ###==========================================================================
   ### Types
   ###==========================================================================
@@ -31,10 +37,19 @@ defmodule Fna.MatchBeam do
 
   @impl true
   def handle_info(:collect_data, state) do
-    # Create collectors
-    capture_data()
-    Logger.info "MatchBeam Data Collected with success"
-    {:stop, :normal, state}
+     case capture_data() do
+      {:ok, body} -> 
+        Logger.info "MatchBeam Data Collected with success #{inspect(body)}"
+        normalize_data(body)
+        |> send_to_database
+        {:stop, :normal, state}
+      _           -> 
+        # TODO: insert a counter in the state to allow a maximum number 
+        #       of retries
+        Logger.info "MatchBeam Data unavailable, retry"
+        Process.send_after(self(), :collect_data, @tIME_TO_RETRY)
+        {:noreply, state}
+    end
   end
 
   ###==========================================================================
@@ -42,6 +57,19 @@ defmodule Fna.MatchBeam do
   ###==========================================================================
 
   defp capture_data() do
-    #TODO: implement the creation here
+    case :httpc.request(:get, {@matchbeam_address, []}, [], []) do
+      {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} -> 
+        {:ok, body}
+      {:ok, {{'HTTP/1.1', 503, 'Service Unavailable'}, _headers, _body}} -> 
+        {:error, :service_unavailable}
+    end
+  end
+
+  defp normalize_data(_body) do
+    # TODO
+  end
+
+  defp send_to_database(_msg) do
+    # TODO
   end
 end

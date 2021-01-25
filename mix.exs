@@ -36,7 +36,7 @@ defmodule FnaApp.MixProject do
     [
       extra_applications: [:logger],
       mod: {Fna.Application, []},
-      applications: [:gproc]
+      applications: [:gproc, :inets]
     ]
   end
 
