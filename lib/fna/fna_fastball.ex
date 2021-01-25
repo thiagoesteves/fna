@@ -37,7 +37,7 @@ defmodule Fna.FastBall do
 
   @impl true
   def handle_info(:collect_data, state) do
-     case capture_data() do
+     case Fna.Util.capture_data(@fastball_address) do
       {:ok, body} -> 
         Logger.info "FastBall Data Collected with success #{inspect(body)}"
         normalize_data(body)
@@ -46,7 +46,7 @@ defmodule Fna.FastBall do
       _           -> 
         # TODO: insert a counter in the state to allow a maximum number 
         #       of retries
-        Logger.info "FastBall Data unavailable, retry"
+        Logger.error "FastBall Data unavailable, retry"
         Process.send_after(self(), :collect_data, @tIME_TO_RETRY)
         {:noreply, state}
     end
@@ -55,15 +55,6 @@ defmodule Fna.FastBall do
   ###==========================================================================
   ### Private functions
   ###==========================================================================
-
-  defp capture_data() do
-    case :httpc.request(:get, {@fastball_address, []}, [], []) do
-      {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} -> 
-        {:ok, body}
-      {:ok, {{'HTTP/1.1', 503, 'Service Unavailable'}, _headers, _body}} -> 
-        {:error, :service_unavailable}
-    end
-  end
 
   defp normalize_data(_body) do
     # TODO
