@@ -11,6 +11,7 @@ defmodule Fna.MatchBeam do
 
   # Server address definitions
   @matchbeam_address 'http://forzaassignment.forzafootball.com:8080/feed/matchbeam'
+  @server_name       "MatchBeam"
 
   # Timeouts
   @tIME_TO_RETRY     1000
@@ -38,10 +39,15 @@ defmodule Fna.MatchBeam do
   @impl true
   def handle_info(:collect_data, state) do
      case Fna.Util.capture_data(@matchbeam_address) do
-      {:ok, body} -> 
-        Logger.info "MatchBeam Data Collected with success #{inspect(body)}"
-        normalize_data(body)
-        |> send_to_database
+      {:ok, body} ->
+        %{ "matches" => map_body } = Poison.decode!(body)
+        unified_map = map_body
+        |> Flow.from_enumerable()
+        |> Flow.partition()
+        |> Flow.map(fn match -> match |> normalize_data(@server_name) end)
+        |> Enum.to_list
+        Logger.info "FastBall Data Collected with success #{inspect(unified_map)}"
+        send_to_database(unified_map)
         {:stop, :normal, state}
       _           -> 
         # TODO: insert a counter in the state to allow a maximum number 
@@ -56,8 +62,13 @@ defmodule Fna.MatchBeam do
   ### Private functions
   ###==========================================================================
 
-  defp normalize_data(_body) do
-    # TODO
+  defp normalize_data(match, server_name) do
+    [home_team, away_team] = String.split(match["teams"], " - ")
+    Fna.Util.create_match(server_name, 
+                          home_team,
+                          away_team,
+                          match["created_at"],
+                          match["kickoff_at"])
   end
 
   defp send_to_database(_msg) do

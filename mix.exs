@@ -36,7 +36,7 @@ defmodule FnaApp.MixProject do
     [
       extra_applications: [:logger],
       mod: {Fna.Application, []},
-      applications: [:gproc, :inets]
+      applications: [:gproc, :inets, :ecto]
     ]
   end
 
@@ -48,6 +48,10 @@ defmodule FnaApp.MixProject do
   defp deps do
     [
       {:gproc, git:  "git://github.com/uwiger/gproc"},
+      {:flow,        "~> 0.14.0"},
+      {:poison,      "~> 3.1"},
+      {:ecto_sql,    "~> 3.0"},
+      {:postgrex,    ">= 0.0.0"},
       {:dialyxir,    "~> 1.0",  only: [:dev], runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
     ]

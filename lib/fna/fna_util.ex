@@ -15,4 +15,18 @@ defmodule Fna.Util do
         {:error, :service_unavailable}
     end
   end
+
+  def create_match(server_name, home_team, away_team, created_at, kickoff_at) do
+    {:ok, kickoff, 0} = DateTime.from_iso8601(kickoff_at)
+    {:ok, created}    = DateTime.from_unix(created_at)
+
+    %Fna.Match{
+      server_name: server_name,
+      home_team: home_team,
+      away_team: away_team,
+      kickoff_at: kickoff,
+      created_at: created
+    }
+  end
+
 end
