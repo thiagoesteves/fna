@@ -36,13 +36,12 @@ defmodule Fna.CollectProducer do
 
   @impl true
   def handle_info(:dispatch_collector, state) do
-    # Create a reference for the operation
-    reference = :erlang.make_ref
-    # Create collectors
-    create_matchbeam_collector(reference)
-    create_fastball_collector(reference)
-    # Notify database
-    notify_database(reference)
+    # Create a reference for the operations, call collectors and notify
+    # the database that some data will be expected
+    :erlang.make_ref
+    |> create_matchbeam_collector
+    |> create_fastball_collector
+    |> notify_database
     # Keep the looping of creating data collectors
     Process.send_after(self(), :dispatch_collector, @fNA_COLLECT_INTERVAL)
     {:noreply, state}
@@ -54,10 +53,12 @@ defmodule Fna.CollectProducer do
 
   defp create_matchbeam_collector(ref) do
     {:ok, _pid } =  Fna.MatchBeamSup.collect_data [ref]
+    ref
   end
 
   defp create_fastball_collector(ref) do
     {:ok, _pid } =  Fna.FastBallSup.collect_data [ref]
+    ref
   end
 
   defp notify_database(ref) do
