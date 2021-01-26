@@ -33,7 +33,7 @@ defmodule Fna.CollectProducer do
     #       database didn't receive the expect information. If this occurs, we should 
     #       retry the collection.
     Logger.info "fna_collect_producer created with success"
-    {:ok, %{ last_checked_time: 0}}
+    {:ok, %{ last_checked_time: 0, ref_timer: :undefined}}
   end
 
   @impl true
@@ -49,8 +49,10 @@ defmodule Fna.CollectProducer do
     |> Fna.DbServer.update_database @number_of_matches_server
 
     # Keep the looping of creating data collectors
-    Process.send_after(self(), :dispatch_collector, @fNA_COLLECT_INTERVAL)
-    {:noreply, state |> Map.put(:last_checked_time, new_time) }
+    {:ok, t_ref} = :timer.send_after(@fNA_COLLECT_INTERVAL, :dispatch_collector)
+    {:noreply, state
+               |> Map.put(:last_checked_time, new_time)
+               |> Map.put(:ref_timer, t_ref) }
   end
 
   ###==========================================================================
