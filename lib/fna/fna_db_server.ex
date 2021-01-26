@@ -8,7 +8,7 @@ defmodule Fna.DbServer do
   ###==========================================================================
   ### Local Defines
   ###==========================================================================
-  @tIMEOUT_TO_RECEIVE_MG 10000
+  @tIMEOUT_TO_RECEIVE_MG 30000
 
   ###==========================================================================
   ### Types
@@ -24,7 +24,7 @@ defmodule Fna.DbServer do
   
   @impl true
   def init([]) do
-    Logger.info "fna_db_server created with success"
+    Logger.info "#{inspect(__MODULE__)} created with success"
     {:ok, clean_state()}
   end
 
@@ -49,10 +49,9 @@ defmodule Fna.DbServer do
   end
 
   @impl true
-  def handle_info(:timeout, state) do
+  def handle_info(:timeout, _) do
     Logger.error "Timeout, the database didn't received all expected messages"
-    # TODO: add a notification for timeout, so any observer could subscribe
-    #       and retry the operation
+    gproc_timeout_notify(:db_timeout)
     {:noreply, clean_state()}
   end
 
@@ -79,11 +78,15 @@ defmodule Fna.DbServer do
     GenServer.call(__MODULE__, {ref, number_of_messages})
   end
 
+  def subscribe_on_timeout() do
+    :gproc.ensure_reg({:p,:l,{__MODULE__,:notify_on_timeout}})
+  end
+
   ###==========================================================================
   ### Private functions
   ###==========================================================================
 
-  defp update_state(%{ :n_messages => 1, ref_timer: t_ref } = state) do
+  defp update_state(%{ :n_messages => 1, ref_timer: t_ref }) do
     # cancel timer
     :timer.cancel(t_ref)
     clean_state()
@@ -96,5 +99,10 @@ defmodule Fna.DbServer do
 
   defp clean_state() do
     %{ ref: :undefined, n_messages: 0, ref_timer: :undefined}
+  end
+
+  defp gproc_timeout_notify(msg) do
+    :gproc.lookup_pids({:p,:l,{__MODULE__,:notify_on_timeout}})
+    |> Enum.each( fn pid -> Process.send(pid, msg, []) end )
   end
 end

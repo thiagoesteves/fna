@@ -12,7 +12,7 @@ defmodule Fna.FastBallSup do
 
   @impl true
   def init([]) do
-    Logger.info "Fna.FastBallSup created with success"
+    Logger.info "#{inspect(__MODULE__)} created with success"
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
