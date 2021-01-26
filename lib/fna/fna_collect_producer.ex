@@ -60,7 +60,7 @@ defmodule Fna.CollectProducer do
   end
 
   defp create_fastball_collector(ref) do
-    {:ok, _pid } =  Fna.FastBallSup.collect_data [ref]
+    {:ok, _pid } =  Fna.FastBallSup.collect_data [ref, 0]
     ref
   end
 end

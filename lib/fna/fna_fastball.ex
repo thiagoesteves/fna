@@ -11,6 +11,7 @@ defmodule Fna.FastBall do
 
   # Server address definitions
   @fastball_address 'http://forzaassignment.forzafootball.com:8080/feed/fastball'
+  @query            '?last_checked_at='
   @server_name      "FastBall"
 
   # Timeouts
@@ -29,16 +30,16 @@ defmodule Fna.FastBall do
   end
   
   @impl true
-  def init([ref]) do
+  def init([ref, last_checked_at]) do
     # Start the collectors dispatching
     Process.send(self(), :collect_data, [])
     Logger.info "FastBall Collector started #{inspect(ref)}"
-    {:ok, ref}
+    {:ok, %{ref: ref, last_time: Integer.to_charlist(last_checked_at)}}
   end
 
   @impl true
-  def handle_info(:collect_data, state) do
-     case Fna.Util.capture_data(@fastball_address) do
+  def handle_info(:collect_data, %{ref: ref, last_time: last_checked_at} = state) do
+     case Fna.Util.capture_data(@fastball_address++@query++last_checked_at) do
       {:ok, body} -> 
         %{ "matches" => map_body } = Poison.decode!(body)
         unified_map = map_body
@@ -46,9 +47,9 @@ defmodule Fna.FastBall do
         |> Flow.partition()
         |> Flow.map(fn match -> match |> normalize_data(@server_name) end)
         |> Enum.to_list
-        Logger.info "FastBall Data Collected with success"
+        Logger.info "FastBall Data Collected with success, #{inspect(length unified_map)}"
         # send to database
-        Fna.DbServer.send_matches(state, unified_map)
+        Fna.DbServer.send_matches(ref, unified_map)
         {:stop, :normal, state}
       _           -> 
         # TODO: insert a counter in the state to allow a maximum number 
