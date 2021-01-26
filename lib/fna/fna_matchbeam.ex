@@ -32,7 +32,7 @@ defmodule Fna.MatchBeam do
   def init([ref]) do
     # Start the collectors dispatching
     Process.send(self(), :collect_data, [])
-    Logger.info "MatchBeam Collector started #{inspect(ref)}"
+    Logger.info @server_name <> " Collector started #{inspect(ref)}"
     {:ok, ref}
   end
 
@@ -46,14 +46,14 @@ defmodule Fna.MatchBeam do
         |> Flow.partition()
         |> Flow.map(fn match -> match |> normalize_data(@server_name) end)
         |> Enum.to_list
-        Logger.info "MatchBeam Data Collected with success"
+        Logger.info @server_name <> " - #{inspect(length unified_map)} matches collected with success"
         # send to database
         Fna.DbServer.send_matches(state, unified_map)
         {:stop, :normal, state}
       _           -> 
         # TODO: insert a counter in the state to allow a maximum number 
         #       of retries
-        Logger.error "MatchBeam Data unavailable, retry"
+        Logger.error @server_name <> " Data unavailable, retry"
         Process.send_after(self(), :collect_data, @tIME_TO_RETRY)
         {:noreply, state}
     end

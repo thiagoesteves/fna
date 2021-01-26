@@ -33,7 +33,7 @@ defmodule Fna.FastBall do
   def init([ref, last_checked_at]) do
     # Start the collectors dispatching
     Process.send(self(), :collect_data, [])
-    Logger.info "FastBall Collector started #{inspect(ref)}"
+    Logger.info @server_name <> " Collector started #{inspect(ref)}"
     {:ok, %{ref: ref, last_time: Integer.to_charlist(last_checked_at)}}
   end
 
@@ -47,14 +47,14 @@ defmodule Fna.FastBall do
         |> Flow.partition()
         |> Flow.map(fn match -> match |> normalize_data(@server_name) end)
         |> Enum.to_list
-        Logger.info "FastBall Data Collected with success, #{inspect(length unified_map)}"
+        Logger.info @server_name <> " - #{inspect(length unified_map)} matches collected with success"
         # send to database
         Fna.DbServer.send_matches(ref, unified_map)
         {:stop, :normal, state}
       _           -> 
         # TODO: insert a counter in the state to allow a maximum number 
         #       of retries
-        Logger.error "FastBall Data unavailable, retry"
+        Logger.error @server_name <> " Data unavailable, retry"
         Process.send_after(self(), :collect_data, @tIME_TO_RETRY)
         {:noreply, state}
     end
