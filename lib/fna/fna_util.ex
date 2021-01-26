@@ -6,7 +6,8 @@ defmodule Fna.Util do
   ###==========================================================================
   ### Public functions
   ###==========================================================================
-
+  
+  @spec capture_data(list()) :: { :ok, list() } | { :error , :service_unavailable }
   def capture_data(address) do
     case :httpc.request(:get, {address, []}, [], []) do
       {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} -> 
@@ -16,6 +17,7 @@ defmodule Fna.Util do
     end
   end
 
+  @spec create_match(binary(), binary(), binary(), integer(), binary()) :: %Fna.Match{}
   def create_match(server_name, home_team, away_team, created_at, kickoff_at) do
     {:ok, kickoff, 0} = DateTime.from_iso8601(kickoff_at)
     {:ok, created}    = DateTime.from_unix(created_at)
@@ -29,15 +31,19 @@ defmodule Fna.Util do
     }
   end
 
+  @spec persist(%Fna.Match{}) :: :inserted | :already
   def persist(match) do
     case Fna.Match.changeset(match, %{}) |> Fna.Repo.insert() do
       {:ok, _} -> 
         :inserted
-      {:error, changeset} -> # already taken
+      {:error, changeset} ->
+        # guarantee unique id error
+        true = match_taken?(changeset.errors)
         :already
     end
   end
 
-  defp match_taken?({:id, {_, [constraint: :unique, constraint_name: _]}}), do: true
+  @spec match_taken?(tuple()) :: true | false
+  defp match_taken?([id: {_, [constraint: :unique, constraint_name: _]}]), do: true
   defp match_taken?(_), do: false
 end

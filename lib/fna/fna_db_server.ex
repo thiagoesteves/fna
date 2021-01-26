@@ -10,6 +10,8 @@ defmodule Fna.DbServer do
   ###==========================================================================
   @tIMEOUT_TO_RECEIVE_MG 30000
 
+  @timeout_msg :receive_timeout
+
   ###==========================================================================
   ### Types
   ###==========================================================================
@@ -49,7 +51,7 @@ defmodule Fna.DbServer do
   end
 
   @impl true
-  def handle_info(:timeout, _) do
+  def handle_info(@timeout_msg, _) do
     Logger.error "Timeout, the database didn't received all expected messages"
     gproc_timeout_notify(:db_timeout)
     {:noreply, clean_state()}
@@ -57,7 +59,7 @@ defmodule Fna.DbServer do
 
   @impl true
   def handle_call({ref, n_messages}, _from, state) do
-    {:ok, t_ref} = :timer.send_after(@tIMEOUT_TO_RECEIVE_MG, :timeout)
+    {:ok, t_ref} = :timer.send_after(@tIMEOUT_TO_RECEIVE_MG, @timeout_msg)
     new_state = 
       state
       |> Map.put(:ref, ref)
@@ -70,14 +72,17 @@ defmodule Fna.DbServer do
   ### Public functions
   ###==========================================================================
 
+  @spec send_matches(reference(), list()) :: :ok
   def send_matches(ref, matches) do
     GenServer.cast(__MODULE__, {ref, matches})
   end
 
+  @spec update_database(reference(), integer()) :: reference()
   def update_database(ref, number_of_messages) do
     GenServer.call(__MODULE__, {ref, number_of_messages})
   end
 
+  @spec subscribe_on_timeout() :: :new | :updated
   def subscribe_on_timeout() do
     :gproc.ensure_reg({:p,:l,{__MODULE__,:notify_on_timeout}})
   end
