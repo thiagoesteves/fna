@@ -27,16 +27,17 @@ defmodule FnaApp.MixProject do
   # Do not start application during the tests
   defp aliases do
     [
-      test: "test --no-start"
+      "ecto.setup": ["ecto.create -r Fna.Repo", "ecto.migrate -r Fna.Repo"],
+      "ecto.reset": ["ecto.drop -r Fna.Repo", "ecto.setup"],
+      test: ["ecto.reset", "test --no-start"]
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {Fna.Application, []},
-      applications: [:gproc, :inets, :ecto]
+      extra_applications: [:logger, :gproc, :inets, :ecto],
+      mod: {Fna.Application, []}
     ]
   end
 

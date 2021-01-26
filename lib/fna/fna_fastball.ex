@@ -44,7 +44,7 @@ defmodule Fna.FastBall do
         unified_map = map_body
         |> Flow.from_enumerable()
         |> Flow.partition()
-        |> Flow.map(fn match -> match |> normalize_data(@server_name) end)
+        |> Flow.map(fn match -> match |> normalize_data(@server_name) |> Fna.Util.persist end)
         |> Enum.to_list
         Logger.info "FastBall Data Collected with success #{inspect(unified_map)}"
         send_to_database(unified_map)

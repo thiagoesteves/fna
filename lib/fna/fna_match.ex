@@ -14,6 +14,7 @@ defmodule Fna.Match do
     struct
     |> Ecto.Changeset.cast(params, [:id, :server_name, :home_team, :away_team, :kickoff_at, :created_at])
     |> Ecto.Changeset.validate_required([:server_name, :home_team, :away_team, :kickoff_at, :created_at])
+    |> Ecto.Changeset.unique_constraint(:id, name: :matches_server_name_home_team_away_team_kickoff_at_index)
   end
 
 end

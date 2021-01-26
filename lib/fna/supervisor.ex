@@ -12,6 +12,7 @@ defmodule Fna.Supervisor do
   @impl true
   def init([]) do
     children = [
+      {Fna.Repo, []},
       Fna.MatchBeamSup,
       Fna.FastBallSup,
       Fna.DbServer,
