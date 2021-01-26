@@ -17,8 +17,7 @@ The initial Design for the servers will be as the picture below:
 
 ### Installing and running PostgreSQL ###
 
-For installation:
-
+For local installation:
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
@@ -30,9 +29,14 @@ postgres=# CREATE USER postgres;
 postgres=# ALTER USER postgres PASSWORD 'postgres';
 postgres=# ALTER USER postgres WITH SUPERUSER;
 ```
+Create the databse using Ecto
+```bash
+mix ecto.drop -r Fna.Repo && mix ecto.create -r Fna.Repo && mix ecto.migrate -r Fna.Repo
+```
 After the application has created the Fna.Repo, you can access the database via this command
 ```bash
 sudo -u postgres psql -W fna_app_repo # password is postgres
+fna_app_repo=# SELECT matches.id AS id, home_team, away_team, created_at, kickoff_at, server_name FROM matches;
 ```
 
 ### Compiling and Running ###
