@@ -31,10 +31,10 @@ defmodule Fna.Util do
 
   def persist(match) do
     case Fna.Match.changeset(match, %{}) |> Fna.Repo.insert() do
-      {:ok, inserted_match} -> 
-        inserted_match
+      {:ok, _} -> 
+        :inserted
       {:error, changeset} -> # already taken
-        :none
+        :already
     end
   end
 

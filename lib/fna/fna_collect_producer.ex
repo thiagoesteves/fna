@@ -11,6 +11,8 @@ defmodule Fna.CollectProducer do
   ###==========================================================================
   @fNA_COLLECT_INTERVAL 10000
 
+  @number_of_matches_server 2
+
   ###==========================================================================
   ### Types
   ###==========================================================================
@@ -41,7 +43,8 @@ defmodule Fna.CollectProducer do
     :erlang.make_ref
     |> create_matchbeam_collector
     |> create_fastball_collector
-    |> notify_database
+    |> Fna.DbServer.update_database @number_of_matches_server
+
     # Keep the looping of creating data collectors
     Process.send_after(self(), :dispatch_collector, @fNA_COLLECT_INTERVAL)
     {:noreply, state}
@@ -59,12 +62,5 @@ defmodule Fna.CollectProducer do
   defp create_fastball_collector(ref) do
     {:ok, _pid } =  Fna.FastBallSup.collect_data [ref]
     ref
-  end
-
-  defp notify_database(ref) do
-    #TODO: Notify database that it should receive data from the collectors.
-    #      This will allow to check if no data was receive and a new collection
-    #      must be executed. The reference can be used as unique ID for the
-    #      operation
   end
 end

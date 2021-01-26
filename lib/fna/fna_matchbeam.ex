@@ -46,8 +46,9 @@ defmodule Fna.MatchBeam do
         |> Flow.partition()
         |> Flow.map(fn match -> match |> normalize_data(@server_name) end)
         |> Enum.to_list
-        Logger.info "FastBall Data Collected with success #{inspect(unified_map)}"
-        send_to_database(unified_map)
+        Logger.info "MatchBeam Data Collected with success"
+        # send to database
+        Fna.DbServer.send_matches(state, unified_map)
         {:stop, :normal, state}
       _           -> 
         # TODO: insert a counter in the state to allow a maximum number 
@@ -69,9 +70,5 @@ defmodule Fna.MatchBeam do
                           away_team,
                           match["created_at"],
                           match["kickoff_at"])
-  end
-
-  defp send_to_database(_msg) do
-    # TODO
   end
 end
