@@ -5,3 +5,4 @@ for app <- Application.spec(:fna_app,:applications) do
 end
 
 ExUnit.start()
+MecksUnit.mock()
