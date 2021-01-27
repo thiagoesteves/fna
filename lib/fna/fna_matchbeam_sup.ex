@@ -13,7 +13,7 @@ defmodule Fna.MatchBeamSup do
   @impl true
   def init([]) do
     Logger.info "#{inspect(__MODULE__)} created with success"
-    DynamicSupervisor.init(strategy: :one_for_one)
+    DynamicSupervisor.init([strategy: :one_for_one, max_restarts: 10, max_seconds: 5])
   end
 
   ###==========================================================================

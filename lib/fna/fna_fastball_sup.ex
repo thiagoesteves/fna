@@ -13,7 +13,7 @@ defmodule Fna.FastBallSup do
   @impl true
   def init([]) do
     Logger.info "#{inspect(__MODULE__)} created with success"
-    DynamicSupervisor.init(strategy: :one_for_one)
+    DynamicSupervisor.init([strategy: :one_for_one, max_restarts: 10, max_seconds: 5])
   end
 
   ###==========================================================================
@@ -21,7 +21,7 @@ defmodule Fna.FastBallSup do
   ###==========================================================================
   @spec collect_data(list()) :: { :ok , pid() }
   def collect_data(args) do
-    spec = %{id: Fna.FastBall, start: {Fna.FastBall, :start_link, [args]}, restart: :transient}
+    spec = %{id: Fna.FastBall, start: {Fna.FastBall, :start_link, [args]}, restart: :transient, max_restarts: 10, max_seconds: 5}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end
 end

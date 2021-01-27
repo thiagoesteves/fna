@@ -14,6 +14,8 @@ defmodule Fna.Util do
         {:ok, body}
       {:ok, {{'HTTP/1.1', 503, 'Service Unavailable'}, _headers, _body}} -> 
         {:error, :service_unavailable}
+      {:ok, {{'HTTP/1.1', 400, _}, _headers, _body}} -> 
+        {:error, :invalid_params}
     end
   end
 

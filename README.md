@@ -46,3 +46,11 @@ To compile and run for your machine just call the following command in the CLI:
 ```bash
 $ iex -S mix
 ```
+
+### Testing and checking ###
+
+Execute the following commands to get more information
+```bash
+$ mix test --cover
+$ mix coveralls.html
+```

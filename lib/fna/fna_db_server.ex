@@ -8,7 +8,7 @@ defmodule Fna.DbServer do
   ###==========================================================================
   ### Local Defines
   ###==========================================================================
-  @tIMEOUT_TO_RECEIVE_MG 30000
+  @tIMEOUT_TO_RECEIVE_MG 30_000
 
   @timeout_msg :receive_timeout
 
@@ -20,14 +20,15 @@ defmodule Fna.DbServer do
   ### GenServer Callbacks
   ###==========================================================================
   
-  def start_link([]) do
-    GenServer.start_link(__MODULE__, [], [name: __MODULE__])
+  def start_link([], timeout \\ @tIMEOUT_TO_RECEIVE_MG) do
+    GenServer.start_link(__MODULE__, [timeout], [name: __MODULE__])
   end
   
   @impl true
-  def init([]) do
+  def init([timeout]) do
     Logger.info "#{inspect(__MODULE__)} created with success"
-    {:ok, clean_state()}
+    {:ok, %{ ref: :undefined, n_messages: 0, 
+             ref_timer: :undefined, timeout: timeout}}
   end
 
   @impl true
@@ -51,15 +52,15 @@ defmodule Fna.DbServer do
   end
 
   @impl true
-  def handle_info(@timeout_msg, _) do
+  def handle_info(@timeout_msg, state) do
     Logger.error "Timeout, the database didn't received all expected messages"
     gproc_timeout_notify(:db_timeout)
-    {:noreply, clean_state()}
+    {:noreply, reset_values(state)}
   end
 
   @impl true
-  def handle_call({ref, n_messages}, _from, state) do
-    {:ok, t_ref} = :timer.send_after(@tIMEOUT_TO_RECEIVE_MG, @timeout_msg)
+  def handle_call({ref, n_messages}, _from, %{ :ref_timer => :undefined } = state) do
+    {:ok, t_ref} = :timer.send_after(state[:timeout], @timeout_msg)
     new_state = 
       state
       |> Map.put(:ref, ref)
@@ -91,10 +92,10 @@ defmodule Fna.DbServer do
   ### Private functions
   ###==========================================================================
 
-  defp update_state(%{ :n_messages => 1, ref_timer: t_ref }) do
+  defp update_state(%{ :n_messages => 1 } = state) do
     # cancel timer
-    :timer.cancel(t_ref)
-    clean_state()
+    :timer.cancel(state[:t_ref])
+    reset_values(state)
   end
 
   defp update_state(%{ :n_messages => msg } = state) do
@@ -102,8 +103,11 @@ defmodule Fna.DbServer do
       |> Map.put(:n_messages, msg - 1)
   end
 
-  defp clean_state() do
-    %{ ref: :undefined, n_messages: 0, ref_timer: :undefined}
+  defp reset_values(state \\ %{}) do
+    state
+    |> Map.put(:ref, :undefined)
+    |> Map.put(:n_messages, 0)
+    |> Map.put(:ref_timer, :undefined)
   end
 
   defp gproc_timeout_notify(msg) do

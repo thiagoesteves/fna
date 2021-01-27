@@ -55,7 +55,7 @@ defmodule FnaApp.MixProject do
       {:postgrex,    ">= 0.0.0"},
       {:dialyxir,    "~> 1.0",  only: [:dev], runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
-      {:mecks_unit,  "~> 0.1.9", only: :test}
+      {:meck,        "~> 0.9.0", only: :test}
     ]
   end
 end
