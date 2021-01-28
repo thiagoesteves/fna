@@ -15,6 +15,22 @@ The initial Design for the servers will be as the picture below:
 
 ![FCA Design](/doc/fna_design.png)
 
+The image below shows the supervision tree captured from the final application:
+
+![Supervision Tree](/doc/supervision_tree.png)
+
+### What can be improved ###
+
+```
+1- It is missing deploy files as docker, aws cloudFormation, etc;
+2- It is possible to improve how both providers are connected by the collect_producer server, maybe each one could
+have its own reference (ID) and the database could request only the one that timed out.
+3- Implement some of the TODOs indicated in the code
+4- Write some tests to check if the database is consistent with the data collected
+5- Increase the number of unit test to achieve 100% coverage
+6- Add configuration file for github actions
+```
+
 ### Installing and running PostgreSQL ###
 
 For local installation:
