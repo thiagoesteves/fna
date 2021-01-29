@@ -4,6 +4,7 @@ config :fna_app, Fna.Repo,
   database: "fna_app_repo",
   username: "postgres",
   password: "postgres",
+#  port: "30432",
   pool_size: 10
 
 config :logger,

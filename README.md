@@ -31,7 +31,7 @@ have its own reference (ID) and the database could request only the one that tim
 6- Add configuration file for github actions
 ```
 
-### Installing and running PostgreSQL ###
+### Installing and running PostgreSQL locally (default) ###
 
 For local installation:
 ```bash
@@ -45,7 +45,7 @@ postgres=# CREATE USER postgres;
 postgres=# ALTER USER postgres PASSWORD 'postgres';
 postgres=# ALTER USER postgres WITH SUPERUSER;
 ```
-Create the databse using Ecto
+Create the database using Ecto
 ```bash
 mix ecto.drop -r Fna.Repo && mix ecto.create -r Fna.Repo && mix ecto.migrate -r Fna.Repo
 ```
@@ -55,6 +55,36 @@ sudo -u postgres psql -W fna_app_repo # password is postgres
 fna_app_repo=# SELECT matches.id AS id, home_team, away_team, created_at, kickoff_at, server_name FROM matches;
 ```
 
+### Running PostgreSQL in a docker ###
+
+Create and run a docker image with postgres:12.4-20.04_beta
+```bash
+docker run -d --name postgres-container -e TZ=UTC -p 30432:5432 -e POSTGRES_PASSWORD=postgres ubuntu/postgres:12.4-20.04_beta
+```
+Change the Ecto configuration at config/config.exs to use the port 30432
+```elixir
+config :fna_app, Fna.Repo,
+  database: "fna_app_repo",
+  username: "postgres",
+  password: "postgres",
+  port: "30432",
+  pool_size: 10
+```
+Create the database using Ecto
+```bash
+mix ecto.drop -r Fna.Repo && mix ecto.create -r Fna.Repo && mix ecto.migrate -r Fna.Repo
+```
+After the application has created the Fna.Repo, you can access the database via this command
+```bash
+docker exec -it postgres-container /bin/bash
+root@86f6777831fe:/# psql -U postgres -W fna_app_repo
+fna_app_repo=# SELECT matches.id AS id, home_team, away_team, created_at, kickoff_at, server_name FROM matches;
+```
+
+PS: these informations can be checked at:
+```
+https://hub.docker.com/r/ubuntu/postgres: 
+```
 ### Compiling and Running ###
 
 To compile and run for your machine just call the following command in the CLI:
